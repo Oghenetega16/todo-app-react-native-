@@ -1,98 +1,148 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useMutation, useQuery } from 'convex/react';
+import { useEffect, useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import Header from '../../components/Header';
+import TodoFeatures from '../../components/TodoFeatures';
+import TodoInput from '../../components/TodoInput';
+import TodoList from '../../components/TodoList';
+import TodoStatus from '../../components/TodoStatus';
+import { api } from '../../convex/_generated/api';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function App() {
+    const [input, setInput] = useState('');
+    const [filter, setFilter] = useState('All');
+    const [theme, setTheme] = useState('light');
+    
+    // Convex hooks
+    const todos = useQuery(api.todos.getTodos) || [];
+    const addTodo = useMutation(api.todos.addTodo);
+    const toggleTodo = useMutation(api.todos.toggleTodo);
+    const deleteTodo = useMutation(api.todos.deleteTodo);
+    const clearCompleted = useMutation(api.todos.clearCompleted);
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    useEffect(() => {
+        loadTheme();
+    }, []);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+    const loadTheme = async () => {
+        try {
+            const savedTheme = await AsyncStorage.getItem('theme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+            }
+        } catch (error) {
+            console.log('Error loading theme:', error);
+        }
+    };
+
+    function handleChange(text: string) {
+        setInput(text);
+    }
+
+    async function addItem() {
+        if (input.trim() !== '') {
+            await addTodo({ text: input });
+            setInput('');
+        }
+    }
+
+    async function handleCheck(id: any) {
+        await toggleTodo({ id });
+    }
+
+    async function handleDeleteItem(id: any) {
+        await deleteTodo({ id });
+    }
+
+    async function handleClearCompleted() {
+        await clearCompleted();
+    }
+
+    // Filter todos
+    const filteredItems = todos.filter(item => {
+        if (filter === 'Active') return !item.checked;
+        if (filter === 'Completed') return item.checked;
+        return true;
+    });
+
+    const isDark = theme === 'dark';
+
+    return (
+        <SafeAreaView style={[
+            styles.container,
+            isDark && styles.containerDark
+        ]}>
+            <Header theme={theme} setTheme={setTheme} />
+            <ScrollView style={styles.scrollView}>
+                <View style={styles.main}>
+                    <TodoInput 
+                        handleChange={handleChange} 
+                        addItem={addItem} 
+                        input={input}
+                        theme={theme}
+                    />
+                    
+                    <View style={[
+                        styles.todoList,
+                        isDark && styles.todoListDark
+                    ]}>
+                        {filteredItems.map((item) => (
+                            <TodoList
+                                key={item._id}
+                                list={item.text}
+                                checked={item.checked}
+                                handleCheck={() => handleCheck(item._id)}
+                                handleDeleteItem={() => handleDeleteItem(item._id)}
+                                filter={filter}
+                                theme={theme}
+                            />
+                        ))}
+                    </View>
+
+                    <TodoStatus 
+                        items={todos} 
+                        filter={filter} 
+                        clearCompleted={handleClearCompleted}
+                        theme={theme}
+                    />
+                    
+                    <TodoFeatures 
+                        setFilter={setFilter} 
+                        filter={filter}
+                        theme={theme}
+                    />
+                </View>
+            </ScrollView>
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: 'hsl(236, 33%, 92%)',    // CSS: var(--main-background-color) light
+    },
+    containerDark: {
+        backgroundColor: 'hsl(235, 21%, 11%)',    // CSS: var(--main-background-color) dark
+    },
+    scrollView: {
+        flex: 1,
+    },
+    main: {
+        paddingHorizontal: 24,                    // CSS: margin: 0 1.5rem (1.5rem = 24px)
+        marginTop: -80,                           // CSS: margin-top: -5rem (-80px)
+        maxWidth: 500,                            // CSS: width: 500px (for tablet/desktop)
+        width: '100%',
+        alignSelf: 'center',                      // CSS: margin: 0 auto (centers content)
+    },
+    todoList: {
+        backgroundColor: 'hsl(0, 0%, 98%)',       // CSS: var(--background-color) light
+        borderTopLeftRadius: 4.8,                 // CSS: border-radius: .3rem
+        borderTopRightRadius: 4.8,
+        overflow: 'hidden',
+    },
+    todoListDark: {
+        backgroundColor: 'hsl(235, 24%, 19%)',    // CSS: var(--background-color) dark
+    },
 });
