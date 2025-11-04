@@ -64,10 +64,9 @@ const styles = StyleSheet.create({
         backgroundColor: 'hsl(235, 24%, 19%)',    // CSS: var(--background-color) dark
     },
     text: {
-        fontSize: 12,                             // CSS: font-size: 12px (inherited from .main)
+        fontSize: 14,                             // CSS: font-size: 12px (inherited from .main)
         color: 'hsl(236, 9%, 61%)',              // CSS: var(--feature-color) light
-        fontWeight: '700',                        // CSS: font-weight: 700
-        fontFamily: 'Josefin Sans',               // CSS: font-family: "Josefin Sans"
+        fontFamily: 'JosefinSans_700Bold',             // CSS: font-family: "Josefin Sans"
     },
     textDark: {
         color: 'hsl(234, 11%, 52%)',             // CSS: var(--feature-color) dark

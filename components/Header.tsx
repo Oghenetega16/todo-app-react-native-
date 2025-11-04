@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
-import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ImageBackground, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface HeaderProps {
-    theme: string;
-    setTheme: (theme: string) => void;
+    theme: 'light' | 'dark';
+    setTheme: React.Dispatch<React.SetStateAction<'light' | 'dark'>>;
 }
 
 export default function Header({ theme, setTheme }: HeaderProps) {
@@ -18,10 +18,18 @@ export default function Header({ theme, setTheme }: HeaderProps) {
         }
     };
 
-    // Background images (replace with your actual image paths)
+    // TODO logo image
+    const todoLogo = require('../assets/images/todo-logo.png'); // Update with your actual logo path
+
+    // Background images
     const backgroundImage = theme === 'light' 
-        ? require('./assets/images/bg-mobile-light.jpg')
-        : require('./assets/images/bg-mobile-dark.jpg');
+        ? require('../assets/images/bg-mobile-light.jpg')
+        : require('../assets/images/bg-mobile-dark.jpg');
+
+    // Theme toggle icons
+    const themeIcon = theme === 'light'
+        ? require('../assets/images/icon-moon.png')
+        : require('../assets/images/icon-sun.png');
 
     return (
         <ImageBackground 
@@ -30,11 +38,9 @@ export default function Header({ theme, setTheme }: HeaderProps) {
             resizeMode="cover"
         >
             <View style={styles.headerContent}>
-                <Text style={styles.title}>TODO</Text>
+                <Image source={todoLogo} style={styles.logoImage} />
                 <TouchableOpacity onPress={toggleTheme}>
-                    <Text style={styles.icon}>
-                        {theme === 'light' ? '🌙' : '☀️'}
-                    </Text>
+                    <Image source={themeIcon} style={styles.iconImage} />
                 </TouchableOpacity>
             </View>
         </ImageBackground>
@@ -43,26 +49,26 @@ export default function Header({ theme, setTheme }: HeaderProps) {
 
 const styles = StyleSheet.create({
     header: {
-        paddingTop: 40,           // CSS: 2rem (32px) - adjusted for mobile
-        paddingBottom: 128,       // CSS: 8rem (128px)
-        paddingHorizontal: 24,    // CSS: 1.5rem (24px)
+        height: 200,
+        paddingHorizontal: 24,
+        paddingTop: 48,
+        position: 'relative',  // Added
     },
     headerContent: {
+        paddingBottom: 40,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        maxWidth: 500,            // CSS: width: 500px
         width: '100%',
-        alignSelf: 'center',      // CSS: margin: 0 auto (centers content)
+        alignSelf: 'center',
     },
-    title: {
-        fontSize: 25,             // CSS: 25px
-        fontWeight: 'bold',
-        color: '#fff',            // CSS: color: white
-        letterSpacing: 9.6,       // CSS: .6rem (≈9.6px at base 16px)
-        fontFamily: 'Josefin Sans',
+    logoImage: {
+        width: 120,
+        height: 30,
+        resizeMode: 'contain',
     },
-    icon: {
-        fontSize: 24,
+    iconImage: {
+        width: 26,
+        height: 26,
     },
 });

@@ -6,5 +6,6 @@ export default defineSchema({
         text: v.string(),
         checked: v.boolean(),
         createdAt: v.number(),
-    }).index("by_creation_time", ["createdAt"]),
+        order: v.optional(v.number()),
+    }).index("by_created_at", ["createdAt"]),
 });
